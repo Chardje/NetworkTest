@@ -18,23 +18,11 @@ namespace Client
                 Console.WriteLine($"Connected {tcpClient.Client.LocalEndPoint} -> {tcpClient.Client.RemoteEndPoint}");
                 NetworkStream networkStream = tcpClient.GetStream();
 
-                byte[] buffer = new byte[8];
-                int p = 0;
-                while (p < 8)
-                {
-                    int r = networkStream.Read(buffer, p, 8 - p);
-                    if (r < 0) throw new Exception("end of stream");
-                    p += r;
-                }
-                Console.Write($"{string.Join(',', buffer)}");
-                long num = BitConverter.ToInt64(buffer);
+                long num = Common.Common.ReadLong(networkStream);
                 Console.WriteLine($"{num}");
 
                 string str = "Epic!!!#$$%%^";
-                byte[] vs = Encoding.UTF8.GetBytes(str);
-                Console.WriteLine($"{vs.Length}: {str}");
-                networkStream.Write(BitConverter.GetBytes(vs.Length));
-                networkStream.Write(vs);
+                Common.Common.WriteString(networkStream,str);
             }
         }
     }

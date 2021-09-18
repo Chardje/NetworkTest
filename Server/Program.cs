@@ -17,37 +17,11 @@ namespace Server
                 Console.WriteLine($"Accepted {tcpClient.Client.RemoteEndPoint} -> {tcpClient.Client.LocalEndPoint}");
                 NetworkStream networkStream = tcpClient.GetStream();
                 long num = 666;
-                byte[] array = BitConverter.GetBytes(num);
-                Console.WriteLine($"{num} -> {string.Join(',', array)}");
-                networkStream.Write(array);
+                Common.Common.WriteLong(networkStream,num);
 
-                int length;
-                {
-                    byte[] buffer = new byte[4];
-                    int p = 0;
-                    while (p < 4)
-                    {
-                        int r = networkStream.Read(buffer, p, 4 - p);
-                        if (r < 0) throw new Exception("end of stream");
-                        p += r;
-                    }
-                    Console.Write($"{string.Join(',', buffer)}");
-                    length = BitConverter.ToInt32(buffer);
-                }
-                Console.WriteLine($"{length}");
-                {
-                    byte[] buffer = new byte[length];
-                    int p = 0;
-                    while (p < length)
-                    {
-                        int r = networkStream.Read(buffer, p, length - p);
-                        if (r < 0) throw new Exception("end of stream");
-                        p += r;
-                    }
-                    Console.Write($"{string.Join(',', buffer)}");
-                    string message = Encoding.UTF8.GetString(buffer);
-                    Console.Write($"{message}");
-                }
+                string message = Common.Common.ReadString(networkStream);
+                
+                Console.Write($"{message}");
 
             }
         }

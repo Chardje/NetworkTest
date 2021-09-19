@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Net;
-using System.Net.Sockets;
+using System.IO;
 using System.Text;
 
 namespace Common
@@ -9,72 +8,48 @@ namespace Common
     {
         public const int PORT = 1234;
 
-        public static void WriteInt(NetworkStream stream, int value)
+        public static void WriteInt(Stream stream, int value)
         {
             stream.Write(BitConverter.GetBytes(value));
         }
-        public static void WriteLong(NetworkStream stream, long value)
+        public static void WriteLong(Stream stream, long value)
         {
             stream.Write(BitConverter.GetBytes(value));
         }
-        public static void WriteString(NetworkStream stream, string value)
+        public static void WriteString(Stream stream, string value)
         {
             byte[] vs = Encoding.UTF8.GetBytes(value);            
             stream.Write(BitConverter.GetBytes(vs.Length));
             stream.Write(vs);
         }
-        public static int ReadInt(NetworkStream stream)
+
+        public static byte[] ReadBufferFully(Stream stream, byte[] buffer)
         {
-            byte[] buffer = new byte[4];
-            int p = 0;
-            while (p < 8)
+            int length = buffer.Length;
+            int position = 0;
+            while (position < length)
             {
-                int r = stream.Read(buffer, p, 8 - p);
-                if (r < 0) throw new Exception("end of stream");
-                p += r;
+                int r = stream.Read(buffer, position, length - position);
+                if (r < 0) throw new Exception("end of stream; read=" + position + "; expected=" + length);
+                position += r;
             }
-            int num = BitConverter.ToInt32(buffer);
-            return num;
+            return buffer;
         }
-        public static long ReadLong(NetworkStream stream)
+
+        public static int ReadInt(Stream stream)
         {
-            byte[] buffer = new byte[8];
-            int p = 0;
-            while (p < 8)
-            {
-                int r = stream.Read(buffer, p, 8 - p);
-                if (r < 0) throw new Exception("end of stream");
-                p += r;
-            }
-            long num = BitConverter.ToInt64(buffer);
-            return num;
+            return BitConverter.ToInt32(ReadBufferFully(stream, new byte[4]));
         }
-        public static string ReadString(NetworkStream stream)
+
+        public static long ReadLong(Stream stream)
         {
-            int length;
-            {
-                byte[] buffer = new byte[4];
-                int p = 0;
-                while (p < 4)
-                {
-                    int r = stream.Read(buffer, p, 4 - p);
-                    if (r < 0) throw new Exception("end of stream");
-                    p += r;
-                }
-                length = BitConverter.ToInt32(buffer);
-            }
-            {
-                byte[] buffer = new byte[length];
-                int p = 0;
-                while (p < length)
-                {
-                    int r = stream.Read(buffer, p, length - p);
-                    if (r < 0) throw new Exception("end of stream");
-                    p += r;
-                }
-                string message = Encoding.UTF8.GetString(buffer);
-                return message;
-            }
+            return BitConverter.ToInt64(ReadBufferFully(stream, new byte[8]));
+        }
+
+        public static string ReadString(Stream stream)
+        {
+            int length = ReadInt(stream);
+            return Encoding.UTF8.GetString(ReadBufferFully(stream, new byte[length]));
         }
     }
 }
